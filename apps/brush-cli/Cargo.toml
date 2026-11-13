@@ -12,7 +12,7 @@ path = "src/main.rs"
 
 [dependencies]
 brush-async.path = "../../crates/brush-async"
-brush-process.path = "../../crates/brush-process"
+brush-process = { path = "../../crates/brush-process", default-features = false }
 
 indicatif.workspace = true
 indicatif-log-bridge = "0.2"
@@ -31,6 +31,14 @@ tokio = { workspace = true, features = ["rt", "rt-multi-thread"] }
 
 [target.'cfg(target_family = "wasm")'.dependencies]
 getrandom = { version = "0.4", features = ["wasm_js"] }
+
+[features]
+# Compute runtime. `--no-default-features --features cuda` builds a CUDA-only
+# trainer with no wgpu in the graph.
+default = ["wgpu"]
+wgpu = ["brush-process/wgpu"]
+cuda = ["brush-process/cuda"]
+cuda-nvrtc = ["cuda", "brush-process/cuda-nvrtc"]
 
 [lints]
 workspace = true

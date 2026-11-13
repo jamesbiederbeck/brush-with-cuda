@@ -16,7 +16,7 @@
 //! tests run on `Autodiff<MainBackend>` (via fusion), exercising the
 //! gradient kernels.
 
-use brush_cube::{CubeDevice, MainBackendBase};
+use brush_cube::{MainBackendBase, MainDevice};
 use brush_render::{
     RenderOutput, SplatOps,
     camera::Camera,
@@ -24,7 +24,6 @@ use brush_render::{
     kernels::camera_model::CameraModel::Pinhole,
     shaders::helpers::TILE_WIDTH,
 };
-use burn::backend::wgpu::WgpuDevice;
 use burn::tensor::DType;
 use burn_cubecl::tensor::CubeTensor;
 use std::num::Wrapping;
@@ -146,8 +145,8 @@ fn finite_scene(seed: u64, n: usize) -> Scene {
     (means, rots, ls, dc, opac)
 }
 
-fn cube_tensor<const D: usize>(device: &WgpuDevice, shape: [usize; D], data: &[f32]) -> CubeTensor {
-    let device = CubeDevice::Wgpu(device.clone());
+fn cube_tensor<const D: usize>(device: &MainDevice, shape: [usize; D], data: &[f32]) -> CubeTensor {
+    let device = brush_cube::cube_device(device.clone());
     let client = device.client();
     let handle = client.create_from_slice(bytemuck::cast_slice(data));
     CubeTensor::new_contiguous(
@@ -160,7 +159,7 @@ fn cube_tensor<const D: usize>(device: &WgpuDevice, shape: [usize; D], data: &[f
 }
 
 async fn render_raw(
-    device: &WgpuDevice,
+    device: &MainDevice,
     camera: &Camera,
     img_size: glam::UVec2,
     scene: &Scene,

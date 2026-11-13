@@ -7,14 +7,19 @@ pub mod train_stream;
 pub use brush_vfs::DataSource;
 pub type ProcessDevice = burn::tensor::Device;
 
+/// The compute runtime this build runs on (`"wgpu"` or `"cuda"`).
+pub use brush_cube::RUNTIME_NAME;
+
 pub fn default_device() -> ProcessDevice {
-    WgpuDevice::default().into()
+    brush_cube::MainDevice::default().into()
 }
 
+#[cfg(not(feature = "cuda"))]
 use burn_wgpu::{
     RuntimeOptions, WgpuDevice,
     graphics::{AutoGraphicsApi, GraphicsApi},
 };
+#[cfg(not(feature = "cuda"))]
 use wgpu::{Adapter, Device, Queue};
 
 use std::future::Future;
@@ -27,6 +32,7 @@ use brush_train::train::{BOUND_PERCENTILE, get_splat_bounds};
 use brush_vfs::SendNotWasm;
 use tokio_stream::{Stream, StreamExt};
 
+#[cfg(not(feature = "cuda"))]
 fn burn_options() -> RuntimeOptions {
     RuntimeOptions {
         tasks_max: 64,
@@ -34,11 +40,21 @@ fn burn_options() -> RuntimeOptions {
     }
 }
 
+/// Bring up the compute device. On CUDA the runtime initializes lazily on
+/// first use (context, stream and memory pools on GPU 0), so there is nothing
+/// to set up ahead of time.
+#[cfg(feature = "cuda")]
+pub async fn burn_init_setup() -> ProcessDevice {
+    default_device()
+}
+
+#[cfg(not(feature = "cuda"))]
 pub async fn burn_init_setup() -> ProcessDevice {
     burn_wgpu::init_setup_async::<AutoGraphicsApi>(&WgpuDevice::default(), burn_options()).await;
     default_device()
 }
 
+#[cfg(not(feature = "cuda"))]
 pub fn burn_init_device(adapter: Adapter, device: Device, queue: Queue) -> ProcessDevice {
     let setup = burn_wgpu::WgpuSetup {
         instance: wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle()), // unused... need to fix this in Burn.

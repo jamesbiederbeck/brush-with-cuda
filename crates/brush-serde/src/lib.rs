@@ -20,7 +20,6 @@ pub use serde_ply::DeserializeError;
 mod test_utils {
     use brush_render::gaussian_splats::{SplatRenderMode, Splats};
     use brush_render::sh::sh_coeffs_for_degree;
-    use burn::backend::wgpu::WgpuDevice;
     use burn::tensor::Device;
 
     pub fn create_test_splats(sh_degree: u32) -> Splats {
@@ -28,7 +27,7 @@ mod test_utils {
     }
 
     pub fn create_test_splats_with_count(sh_degree: u32, num_splats: usize) -> Splats {
-        let device: Device = WgpuDevice::default().into();
+        let device: Device = brush_cube::MainDevice::default().into();
         let coeffs_per_channel = sh_coeffs_for_degree(sh_degree) as usize;
 
         let mut means = Vec::new();

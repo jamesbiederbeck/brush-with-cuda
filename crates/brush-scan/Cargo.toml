@@ -6,13 +6,15 @@ readme.workspace = true
 license.workspace = true
 
 [dependencies]
-brush-cube.path = "../brush-cube"
+brush-cube = { path = "../brush-cube", default-features = false }
 burn.workspace = true
 bytemuck = { workspace = true, features = ["derive"] }
-burn-wgpu.workspace = true
 burn-cubecl.workspace = true
 
 [dev-dependencies]
+# Tests and benches need a compute runtime; the default one (wgpu) unless
+# `--features brush-cube/cuda` asks for CUDA.
+brush-cube = { path = "../brush-cube" }
 divan = "0.1.17"
 tokio = { workspace = true, features = ["macros", "rt"] }
 wasm-bindgen-test = "0.3"

@@ -1,0 +1,31 @@
+From 396a8ce17895dee50893755d36c6b082cf930a9f Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Thu, 12 Nov 2026 20:07:41 -0800
+Subject: [PATCH] cuda: emit atom without .relaxed so kernels assemble below
+ sm_70
+
+Co-Authored-By: Claude Fable 5.2 <noreply@anthropic.com>
+---
+ crates/cubecl-cpp/src/cuda/atomic.rs | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/crates/cubecl-cpp/src/cuda/atomic.rs b/crates/cubecl-cpp/src/cuda/atomic.rs
+index a35bcc36..1052e90d 100644
+--- a/crates/cubecl-cpp/src/cuda/atomic.rs
++++ b/crates/cubecl-cpp/src/cuda/atomic.rs
+@@ -110,7 +110,11 @@ macro_rules! atomic_binop {
+                 let ty = $atom_ty(ctx, value);
+                 let value = as_registers(scope, value);
+ 
+-                let ptx = format!("atom.relaxed.{}{ftz}{vec}.{ty} $0, [$1], $2;", $op);
++                // No `.relaxed`: ptxas only accepts an explicit `.sem` qualifier for
++                // `.target sm_70` and up, and rejects the kernel on Pascal and older.
++                // Relaxed is what `atom` means when the qualifier is left out, so the
++                // short form is the same instruction on every target.
++                let ptx = format!("atom.{}{ftz}{vec}.{ty} $0, [$1], $2;", $op);
+                 let op = InlinePtxOp::new_volatile(
+                     ctx,
+                     Some(value.get_type(ctx)),
+-- 
+2.39.5
+

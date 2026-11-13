@@ -1,9 +1,11 @@
+use crate::{CubeDevice, MainDevice};
+#[cfg(target_family = "wasm")]
 use burn_wgpu::WgpuDevice;
 
 /// Initialize and return the default GPU device for tests.
 ///
 /// On native, the device initializes lazily, so this just returns it.
-pub async fn test_device() -> WgpuDevice {
+pub async fn test_device() -> MainDevice {
     #[cfg(target_family = "wasm")]
     {
         use std::sync::Once;
@@ -44,5 +46,10 @@ pub async fn test_device() -> WgpuDevice {
             );
         }
     }
-    WgpuDevice::default()
+    MainDevice::default()
+}
+
+/// [`test_device`], wrapped for launching kernels directly.
+pub async fn test_cube_device() -> CubeDevice {
+    crate::cube_device(test_device().await)
 }

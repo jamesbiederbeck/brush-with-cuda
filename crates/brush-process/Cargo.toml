@@ -7,6 +7,11 @@ readme.workspace = true
 license.workspace = true
 
 [features]
+# Compute runtime, forwarded to brush-cube. `cuda` wins when both are on.
+default = ["wgpu"]
+wgpu = ["brush-cube/wgpu", "dep:wgpu", "dep:burn-wgpu"]
+cuda = ["brush-cube/cuda"]
+cuda-nvrtc = ["cuda", "brush-cube/cuda-nvrtc"]
 debug-validation = ["brush-train/debug-validation"]
 
 [dependencies]
@@ -15,7 +20,8 @@ brush-vfs.path = "../brush-vfs"
 brush-serde.path = "../brush-serde"
 
 burn.workspace = true
-burn-wgpu.workspace = true
+burn-wgpu = { workspace = true, optional = true }
+brush-cube = { path = "../brush-cube", default-features = false }
 
 alphanumeric-sort.workspace = true
 anyhow.workspace = true
@@ -31,7 +37,7 @@ tracing.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 
-wgpu.workspace = true
+wgpu = { workspace = true, optional = true }
 
 tokio = { workspace = true, features = ["io-util", "rt"] }
 tokio-stream.workspace = true

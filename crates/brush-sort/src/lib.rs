@@ -7,7 +7,7 @@ use burn::backend::TensorMetadata;
 use burn::cubecl::CubeDim;
 use burn::cubecl::calculate_cube_count_elemwise;
 use burn::tensor::DType;
-use burn_wgpu::CubeTensor;
+use burn_cubecl::tensor::CubeTensor;
 
 use kernels::{BIN_COUNT, BLOCK_SIZE, WG};
 
@@ -135,7 +135,7 @@ mod tests {
     use burn::backend::ops::IntTensorOps;
     use burn::tensor::DType;
 
-    use burn_wgpu::CubeTensor;
+    use burn_cubecl::tensor::CubeTensor;
     use rand::RngExt;
     use wasm_bindgen_test::wasm_bindgen_test;
 
@@ -157,7 +157,7 @@ mod tests {
 
     #[wasm_bindgen_test(unsupported = tokio::test)]
     async fn test_sorting() {
-        let device = CubeDevice::Wgpu(brush_cube::test_helpers::test_device().await);
+        let device = brush_cube::test_helpers::test_cube_device().await;
 
         for i in 0..128 {
             let keys_inp = [
@@ -222,7 +222,7 @@ mod tests {
 
         let values_inp: Vec<_> = keys_inp.iter().map(|&x| x * 2 + 5).collect();
 
-        let device = CubeDevice::Wgpu(brush_cube::test_helpers::test_device().await);
+        let device = brush_cube::test_helpers::test_cube_device().await;
         let keys = create_tensor_from_slice(&keys_inp, &device, DType::I32);
         let values = create_tensor_from_slice(&values_inp, &device, DType::I32);
         let (ret_keys, ret_values) = radix_argsort(keys, values, 32);
@@ -258,7 +258,7 @@ mod tests {
             .collect();
         let values_inp: Vec<u32> = (0..NUM_ELEMENTS).map(|i| i as u32).collect();
 
-        let device = CubeDevice::Wgpu(brush_cube::test_helpers::test_device().await);
+        let device = brush_cube::test_helpers::test_cube_device().await;
         let keys = create_tensor_from_slice(&keys_inp, &device, DType::I32);
         let values = create_tensor_from_slice(&values_inp, &device, DType::I32);
         let (ret_keys, ret_values) = radix_argsort(keys, values, 32);
@@ -318,7 +318,7 @@ mod tests {
             expected_values[k as usize] = i as u32;
         }
 
-        let device = CubeDevice::Wgpu(brush_cube::test_helpers::test_device().await);
+        let device = brush_cube::test_helpers::test_cube_device().await;
         let keys = create_tensor_from_slice(&keys_inp, &device, DType::I32);
         let values = create_tensor_from_slice(&values_inp, &device, DType::I32);
         let (ret_keys, ret_values) = radix_argsort(keys, values, 32);

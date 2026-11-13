@@ -34,7 +34,7 @@ fn main() {
     #[cfg(not(target_family = "wasm"))]
     {
         println!("Converting LPIPS PyTorch model to Burn format...");
-        convert::convert_lpips(&burn::backend::wgpu::WgpuDevice::default().into());
+        convert::convert_lpips(&brush_cube::MainDevice::default().into());
         println!("Conversion completed successfully!");
     }
 }

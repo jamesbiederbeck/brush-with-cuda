@@ -19,7 +19,7 @@
 //! Backward recomputes SSIM partials inline so no per-pixel state survives
 //! across the autograd tape.
 
-use brush_cube::create_tensor;
+use brush_cube::{create_tensor, zeros_tensor};
 use burn::backend::autodiff::checkpoint::strategy::CheckpointStrategy;
 use burn::backend::{Autodiff, AutodiffBackend};
 use burn::{
@@ -190,7 +190,8 @@ mod kernels {
         (select(oob, zero, gt_c), select(oob, zero, gt_a))
     }
 
-    /// Map a tile-local position offset by `halo` to global image coords.
+    /// Map a tile-local position offset by `halo` to global image coords,
+    /// or to `(0, 0)` with the flag set when it falls outside the image.
     #[cube]
     fn coords(
         tile_y0: u32,
@@ -207,7 +208,12 @@ mod kernels {
         let zero = u32::cast_from(0u32);
         let gy = select(oob_under, zero, total_y - halo);
         let gx = select(oob_under, zero, total_x - halo);
-        (gy, gx, oob_under || gy >= h || gx >= w)
+        let oob = oob_under || gy >= h || gx >= w;
+        // Every out-of-range position maps to (0, 0), past the far edges
+        // included: callers read at the returned coords unconditionally and
+        // discard the value with `select`, and only WebGPU clamps a stray
+        // index. CUDA would read past the end of the image.
+        (select(oob, zero, gy), select(oob, zero, gx), oob)
     }
 
     #[cube]
@@ -958,12 +964,7 @@ fn launch_image_forward(
         )
     } else {
         (
-            burn_cubecl::ops::numeric::zeros_client(
-                client.clone(),
-                device.clone(),
-                Shape::new([h as usize, w as usize, cn as usize]),
-                DType::F32,
-            ),
+            zeros_tensor([h as usize, w as usize, cn as usize], &device, DType::F32),
             create_tensor([1], &device, DType::F32),
         )
     };
@@ -1062,12 +1063,7 @@ fn launch_unpack_gt_rgb(gt_packed: CubeTensor, composite_bg: Option<Vec3>) -> Cu
     let bg = composite_bg.unwrap_or(Vec3::ZERO);
 
     let client = gt_packed.client.clone();
-    let out = burn_cubecl::ops::numeric::zeros_client(
-        client.clone(),
-        gt_packed.device.clone(),
-        Shape::new([h as usize, w as usize, 3]),
-        DType::F32,
-    );
+    let out = zeros_tensor([h as usize, w as usize, 3], &gt_packed.device, DType::F32);
     let cube_count = CubeCount::Static(
         w.div_ceil(kernels::BLOCK_X),
         h.div_ceil(kernels::BLOCK_Y),

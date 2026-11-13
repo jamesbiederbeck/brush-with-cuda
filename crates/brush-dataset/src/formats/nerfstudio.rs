@@ -30,7 +30,7 @@ struct JsonScene {
     /// Focal length y
     fl_y: Option<f64>,
 
-    /// Nerfstudio camera model: `"OPENCV"`, `"OPENCV_FISHEYE"`, or unset (pinhole).
+    /// Nerfstudio camera model: `"OPENCV"`, `"OPENCV_FISHEYE"`, `"PINHOLE"`, or unset (pinhole).
     camera_model: Option<String>,
     // Nerfstudio doesn't mention this in their format? But fine to include really.
     ply_file_path: Option<String>,
@@ -114,7 +114,13 @@ fn resolve_camera_model(
 ) -> Result<CameraModel, FormatError> {
     let f = |o: Option<f64>| o.unwrap_or(0.0) as f32;
     match model_name {
-        None | Some("PERSPECTIVE" | "perspective") => Ok(Pinhole),
+        // nerfstudio's own `CAMERA_MODEL_TO_TYPE` lists these as undistorted
+        // perspective cameras too.
+        None
+        | Some(
+            "PERSPECTIVE" | "perspective" | "PINHOLE" | "pinhole" | "SIMPLE_PINHOLE"
+            | "simple_pinhole",
+        ) => Ok(Pinhole),
         Some("OPENCV" | "opencv") => Ok(RadialTangential8(RadialTangential8Params {
             k1: f(k1),
             k2: f(k2),

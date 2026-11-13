@@ -17,6 +17,10 @@ name = "brush"
 path = "src/bin.rs"
 
 [features]
+# Train and render on CUDA instead of wgpu. The UI still draws with wgpu; the
+# viewer already takes frames as host pixels, so nothing else changes.
+cuda = ["brush-process/cuda", "brush-cli/cuda"]
+cuda-nvrtc = ["cuda", "brush-process/cuda-nvrtc"]
 tracy = ["dep:tracing-subscriber", "dep:tracing-tracy"]
 debug-validation = ["brush-render/debug-validation", "brush-process/debug-validation"]
 

@@ -6,10 +6,12 @@ readme.workspace = true
 license.workspace = true
 
 [dependencies]
-# Provides `DeviceOps` for `WgpuDevice` in standalone builds.
-burn = { workspace = true, features = ["wgpu"] }
+burn.workspace = true
 burn-cubecl.workspace = true
-burn-wgpu.workspace = true
+burn-wgpu = { workspace = true, optional = true }
+burn-cuda = { workspace = true, optional = true }
+# Renamed so it cannot shadow `burn::cubecl`, which the `#[cube]` macros resolve.
+cubecl-features = { workspace = true, optional = true }
 bytemuck = { workspace = true, features = ["derive"] }
 log.workspace = true
 
@@ -21,6 +23,20 @@ wasm-logger = "0.2"
 workspace = true
 
 [features]
+# Exactly one cubecl runtime does the compute. `wgpu` is the portable default
+# (WebGPU / Vulkan / Metal / DX12). `cuda` runs the same `#[cube]` kernels
+# through cubecl-cuda on NVIDIA hardware; when both are on, `cuda` wins, so
+# `--features brush-cube/cuda` is enough to switch a build over.
+default = ["wgpu"]
+# `burn/wgpu` also provides `DeviceOps` for `WgpuDevice` in standalone builds.
+wgpu = ["burn/wgpu", "dep:burn-wgpu"]
+cuda = ["burn/cuda", "dep:burn-cuda"]
+# Compile kernels by handing CUDA C++ to NVRTC instead of lowering them to PTX
+# through cubecl's bundled LLVM. Brush needs this today: the sort, scan and
+# loss kernels use warp shuffles (`plane_shuffle_*`), and upstream LLVM's NVPTX
+# target cannot select `llvm.nvvm.shfl.sync.*`, so the LLVM path aborts.
+# Needs `libnvrtc` (and its builtins) on the loader path at runtime.
+cuda-nvrtc = ["cuda", "dep:cubecl-features", "cubecl-features/cuda-cpp"]
 # Compile kernels to MSL instead of going through wgpu's WGSL frontend.
 # macOS only, and opt-in on purpose:
 #
@@ -32,4 +48,4 @@ workspace = true
 #  * CI runners are exactly that case, so they build without this.
 #
 # Use it on real hardware: `cargo test --features brush-cube/metal`.
-metal = ["burn-wgpu/metal"]
+metal = ["wgpu", "burn-wgpu/metal"]

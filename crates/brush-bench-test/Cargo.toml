@@ -15,6 +15,7 @@ glam.workspace = true
 log.workspace = true
 burn = { workspace = true, features = ["autodiff"] }
 burn-cubecl.workspace = true
+brush-cube = { path = "../brush-cube", default-features = false }
 rand.workspace = true
 
 divan = "0.1.17"
@@ -32,7 +33,6 @@ brush-cube = { path = "../brush-cube" }
 # `inspect` is how the fusion test reads back what burn fused.
 burn-fusion = { workspace = true, features = ["test-util"] }
 
-burn-wgpu.workspace = true
 bytemuck.workspace = true
 
 wasm-bindgen-test = "0.3"

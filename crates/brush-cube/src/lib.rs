@@ -19,12 +19,42 @@
 
 mod host;
 pub mod test_helpers;
-use burn_wgpu::CubeBackend;
+use burn_cubecl::CubeBackend;
 pub use host::*;
 
+#[cfg(not(any(feature = "wgpu", feature = "cuda")))]
+compile_error!("brush-cube needs a compute runtime: enable the `wgpu` or `cuda` feature.");
+
+/// The device of the compute runtime this build runs on. CUDA when the
+/// `cuda` feature is on, wgpu otherwise.
+#[cfg(feature = "cuda")]
+pub type MainDevice = burn_cuda::CudaDevice;
+#[cfg(all(feature = "wgpu", not(feature = "cuda")))]
 pub type MainDevice = burn_wgpu::WgpuDevice;
+
+/// Every cubecl runtime shares one backend type; the device picks the runtime.
 pub type MainBackendBase = CubeBackend;
-pub type MainBackend = burn_wgpu::Wgpu;
+pub type MainBackend = burn_cubecl::Cube;
+
+/// Name of the compute runtime compiled in, for logs.
+pub const RUNTIME_NAME: &str = if cfg!(feature = "cuda") {
+    "cuda"
+} else {
+    "wgpu"
+};
+
+/// Wrap the runtime device in the runtime-erased cubecl device that kernels
+/// and `CubeTensor`s are launched against.
+pub fn cube_device(device: MainDevice) -> CubeDevice {
+    #[cfg(feature = "cuda")]
+    {
+        CubeDevice::Cuda(device)
+    }
+    #[cfg(all(feature = "wgpu", not(feature = "cuda")))]
+    {
+        CubeDevice::Wgpu(device)
+    }
+}
 
 use burn::cubecl;
 use burn::cubecl::cube;

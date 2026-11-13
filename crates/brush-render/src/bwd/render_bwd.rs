@@ -1,16 +1,15 @@
 use crate::gaussian_splats::SplatRenderMode;
 use crate::kernels::types::RasterizeUniformsLaunch;
 use crate::sh::sh_coeffs_for_degree;
-use brush_cube::create_tensor;
+use brush_cube::{create_tensor, zeros_tensor};
 use burn::backend::TensorMetadata;
-use burn::backend::ops::FloatTensorOps;
 use burn::backend::tensor::{FloatTensor, IntTensor};
 use burn::cubecl::CubeCount;
 use burn::cubecl::CubeDim;
 use burn::cubecl::calculate_cube_count_elemwise;
 use burn::cubecl::features::AtomicUsage;
 use burn::cubecl::ir::{ElemType, FloatKind, Type};
-use burn::tensor::{DType, FloatDType};
+use burn::tensor::DType;
 use burn_cubecl::CubeBackend;
 use burn_cubecl::kernel::into_contiguous;
 use glam::{Vec3, uvec2};
@@ -38,7 +37,7 @@ impl SplatBwdOps for CubeBackend {
         let client = projected_splats.client.clone();
 
         // Sparse [num_visible, 10] indexed by compact_gid.
-        let v_combined = Self::float_zeros([num_visible, 10].into(), &device, FloatDType::F32);
+        let v_combined = zeros_tensor([num_visible, 10], &device, DType::F32);
 
         let tile_bounds = uvec2(
             img_size.x.div_ceil(crate::shaders::helpers::TILE_WIDTH),

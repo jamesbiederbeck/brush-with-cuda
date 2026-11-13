@@ -229,13 +229,14 @@ mod forward_rendering {
     const SPLAT_COUNTS: [usize; 3] = [500_000, 1_000_000, 2_500_000];
 
     use burn::cubecl::future::block_on;
-    use burn::{backend::wgpu::WgpuDevice, prelude::Device};
+    use brush_cube::MainDevice;
+    use burn::prelude::Device;
 
     use crate::benches::{ITERS_PER_SYNC, run_forward_render};
 
     #[divan::bench(args = SPLAT_COUNTS)]
     fn render_1080p(bencher: divan::Bencher, splat_count: usize) {
-        let device = Device::from(WgpuDevice::default()).autodiff();
+        let device = Device::from(MainDevice::default()).autodiff();
         bencher.bench_local(move || {
             block_on(async {
                 run_forward_render(&device, splat_count, (1920, 1080), ITERS_PER_SYNC).await;
@@ -246,7 +247,7 @@ mod forward_rendering {
 
     #[divan::bench(args = RESOLUTIONS)]
     fn render_2m_splats(bencher: divan::Bencher, (width, height): (u32, u32)) {
-        let device = Device::from(WgpuDevice::default()).autodiff();
+        let device = Device::from(MainDevice::default()).autodiff();
         bencher.bench_local(move || {
             block_on(async {
                 run_forward_render(&device, 2_000_000, (width, height), ITERS_PER_SYNC).await;
@@ -262,13 +263,14 @@ mod backward_rendering {
     const RESOLUTIONS: [(u32, u32); 4] = [(1024, 1024), (1920, 1080), (2560, 1440), (3200, 1800)];
 
     use burn::cubecl::future::block_on;
-    use burn::{backend::wgpu::WgpuDevice, prelude::Device};
+    use brush_cube::MainDevice;
+    use burn::prelude::Device;
 
     use crate::benches::{ITERS_PER_SYNC, run_backward_render};
 
     #[divan::bench(args = [1_000_000, 2_000_000, 5_000_000])]
     fn render_grad_1080p(bencher: divan::Bencher, splat_count: usize) {
-        let device = Device::from(WgpuDevice::default()).autodiff();
+        let device = Device::from(MainDevice::default()).autodiff();
         bencher.bench_local(move || {
             block_on(async {
                 run_backward_render(&device, splat_count, (1920, 1080), ITERS_PER_SYNC).await;
@@ -279,7 +281,7 @@ mod backward_rendering {
 
     #[divan::bench(args = RESOLUTIONS)]
     fn render_grad_2m_splats(bencher: divan::Bencher, (width, height): (u32, u32)) {
-        let device = Device::from(WgpuDevice::default()).autodiff();
+        let device = Device::from(MainDevice::default()).autodiff();
         bencher.bench_local(move || {
             block_on(async {
                 run_backward_render(&device, 2_000_000, (width, height), ITERS_PER_SYNC).await;
@@ -295,13 +297,14 @@ mod training {
     const SPLAT_COUNTS: [usize; 3] = [500_000, 1_000_000, 2_500_000];
 
     use burn::cubecl::future::block_on;
-    use burn::{backend::wgpu::WgpuDevice, prelude::Device};
+    use brush_cube::MainDevice;
+    use burn::prelude::Device;
 
     use crate::benches::{ITERS_PER_SYNC, run_training_steps};
 
     #[divan::bench(args = SPLAT_COUNTS)]
     fn train_steps(splat_count: usize) {
-        let device = Device::from(WgpuDevice::default()).autodiff();
+        let device = Device::from(MainDevice::default()).autodiff();
         block_on(async {
             run_training_steps(&device, splat_count, (1920, 1080), ITERS_PER_SYNC).await;
             device.sync().expect("Failed to sync");

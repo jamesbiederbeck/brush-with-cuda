@@ -37,6 +37,37 @@ pub fn create_tensor<const D: usize>(
     CubeTensor::new_contiguous(client, device.clone(), shape, buffer, dtype)
 }
 
+/// Reserve a zero-filled buffer for the given shape, packed row-major.
+///
+/// Use this, not burn's `float_zeros` / `int_zeros`, for anything a kernel
+/// indexes by hand. Some runtimes (CUDA) lay a burn-allocated tensor of rank
+/// two or more out with each row padded to an alignment boundary, and burn's
+/// fill only touches the elements its strides reach. A kernel that indexes
+/// the buffer as `row * width + col` then lands on padding that was never
+/// zeroed. A rank-one allocation has no rows to pad, so zero that and view it
+/// with the packed shape.
+pub fn zeros_tensor<const D: usize>(
+    shape: [usize; D],
+    device: &CubeDevice,
+    dtype: DType,
+) -> CubeTensor {
+    let client = device.client();
+    let num_elements: usize = shape.iter().product();
+    let flat = burn_cubecl::ops::numeric::zeros_client(
+        client.clone(),
+        device.clone(),
+        Shape::new([num_elements]),
+        dtype,
+    );
+    CubeTensor::new_contiguous(
+        client,
+        device.clone(),
+        Shape::from(shape.to_vec()),
+        flat.handle,
+        dtype,
+    )
+}
+
 /// Upload a slice of POD data to the GPU as a 1D `CubeTensor`.
 pub fn create_tensor_from_slice<T: Pod>(
     data: &[T],

@@ -49,6 +49,32 @@ First install rust 1.88+. You can run tests with `cargo test --all`. Brush uses 
 ### Windows/macOS/Linux
 Use `cargo run --release` from the workspace root to make an optimized build. Use `cargo run` to run a debug build. 
 
+### CUDA (NVIDIA, Linux/Windows)
+The compute kernels can run on CUDA instead of wgpu. The headless trainer builds with no wgpu in it at all:
+
+```
+cargo run --release -p brush-cli --no-default-features --features cuda-nvrtc -- <dataset> --export-path <dir>
+```
+
+The viewer keeps drawing its UI with wgpu and only moves training and rendering to CUDA: `cargo run --release --features cuda-nvrtc`.
+
+`cuda-nvrtc` compiles kernels with NVRTC and is the one to use. Plain `cuda` goes through cubecl's bundled LLVM instead, which cannot yet compile the warp shuffles the sort and scan kernels use. At runtime NVRTC needs:
+
+- `libnvrtc.so` and its `libnvrtc-builtins` on the loader path (`LD_LIBRARY_PATH`), from a CUDA toolkit or the `nvidia-cuda-nvrtc-cu12` pip package. Use a 12.x release for GPUs older than the RTX 20 series; CUDA 13 dropped them.
+- `CUDA_PATH` pointing at a directory that holds `nvvm/libdevice/libdevice.10.bc`.
+
+The workspace `[patch]` section expects a cubecl checkout next to this repo, at burn's pinned revision with one fix applied (cubecl's CUDA C++ backend emits an atomic form that GPUs older than the RTX 20 series reject):
+
+```
+git clone https://github.com/tracel-ai/cubecl ../cubecl
+git -C ../cubecl checkout 467522442c7b68f02c7ff0c84b2e249e36d8da91
+git -C ../cubecl am ../brush-with-cuda/patches/cubecl-sm61-atomics.patch
+```
+
+Known gaps: four tests in `brush-bench-test`'s fuzz suite still fail on CUDA, and the viewer has not been run on CUDA yet.
+
+To run a crate's tests on CUDA add `--features brush-cube/cuda-nvrtc`, e.g. `cargo test -p brush-bench-test --features brush-cube/cuda-nvrtc -- --test-threads=1`.
+
 ### Web
 Brush can be compiled to WASM. Run `npm run dev` to start the demo website using Next.js, see the web directory in app/brush-app/web.
 

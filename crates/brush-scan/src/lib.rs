@@ -12,7 +12,7 @@ use brush_cube::create_tensor;
 use burn::backend::TensorMetadata;
 use burn::cubecl::CubeDim;
 use burn::cubecl::calculate_cube_count_elemwise;
-use burn_wgpu::CubeTensor;
+use burn_cubecl::tensor::CubeTensor;
 use kernels::BLOCK_SIZE_USIZE;
 
 /// Inclusive prefix sum over a contiguous 1D `u32` tensor.
@@ -86,7 +86,7 @@ mod tests {
     use burn::backend::ops::IntTensorOps;
     use burn::tensor::DType;
 
-    use burn_wgpu::CubeTensor;
+    use burn_cubecl::tensor::CubeTensor;
     use wasm_bindgen_test::wasm_bindgen_test;
 
     #[cfg(target_family = "wasm")]
@@ -101,7 +101,7 @@ mod tests {
 
     #[wasm_bindgen_test(unsupported = tokio::test)]
     async fn test_sum_tiny() {
-        let device = CubeDevice::Wgpu(brush_cube::test_helpers::test_device().await);
+        let device = brush_cube::test_helpers::test_cube_device().await;
         let keys = create_tensor_from_slice(&[1i32, 1, 1, 1], &device, DType::I32);
         let summed = read_i32(prefix_sum(keys)).await;
         assert_eq!(summed.len(), 4);
@@ -112,7 +112,7 @@ mod tests {
     async fn test_workgroup_multiple() {
         const ITERS: usize = 1024;
         let data: Vec<i32> = (0..ITERS).map(|i| 90 + i as i32).collect();
-        let device = CubeDevice::Wgpu(brush_cube::test_helpers::test_device().await);
+        let device = brush_cube::test_helpers::test_cube_device().await;
         let keys = create_tensor_from_slice(&data, &device, DType::I32);
         let summed = read_i32(prefix_sum(keys)).await;
         let prefix_sum_ref: Vec<_> = data
@@ -129,7 +129,7 @@ mod tests {
 
     #[wasm_bindgen_test(unsupported = tokio::test)]
     async fn test_empty() {
-        let device = CubeDevice::Wgpu(brush_cube::test_helpers::test_device().await);
+        let device = brush_cube::test_helpers::test_cube_device().await;
         let keys = create_tensor_from_slice::<i32>(&[], &device, DType::I32);
         let summed = prefix_sum(keys);
         assert_eq!(summed.shape()[0], 0);
@@ -137,7 +137,7 @@ mod tests {
 
     #[wasm_bindgen_test(unsupported = tokio::test)]
     async fn test_workgroup_boundaries() {
-        let device = CubeDevice::Wgpu(brush_cube::test_helpers::test_device().await);
+        let device = brush_cube::test_helpers::test_cube_device().await;
 
         for len in [255usize, 256, 257] {
             let data: Vec<i32> = (0..len).map(|i| (i % 7) as i32).collect();
@@ -166,7 +166,7 @@ mod tests {
             data.push(30965);
         }
 
-        let device = CubeDevice::Wgpu(brush_cube::test_helpers::test_device().await);
+        let device = brush_cube::test_helpers::test_cube_device().await;
         let keys = create_tensor_from_slice(&data, &device, DType::I32);
         let summed = read_i32(prefix_sum(keys)).await;
 
@@ -185,7 +185,7 @@ mod tests {
 
     #[wasm_bindgen_test(unsupported = tokio::test)]
     async fn test_block_boundaries() {
-        let device = CubeDevice::Wgpu(brush_cube::test_helpers::test_device().await);
+        let device = brush_cube::test_helpers::test_cube_device().await;
         // Around one block, two blocks, and the first second-level block.
         for len in [
             1023usize,
@@ -215,7 +215,7 @@ mod tests {
         // Use small values to avoid overflow in prefix sum
         let data: Vec<i32> = (0..NUM_ELEMENTS).map(|i| (i % 100) as i32).collect();
 
-        let device = CubeDevice::Wgpu(brush_cube::test_helpers::test_device().await);
+        let device = brush_cube::test_helpers::test_cube_device().await;
         let keys = create_tensor_from_slice(&data, &device, DType::I32);
         let summed_slice = read_i32(prefix_sum(keys)).await;
 

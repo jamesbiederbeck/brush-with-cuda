@@ -10,7 +10,7 @@ burn.workspace = true
 image.workspace = true
 
 [dev-dependencies]
-brush-cube = { path = "../brush-cube" }
+brush-cube = { path = "../brush-cube", default-features = false }
 tokio = { workspace = true, features = ["macros", "rt"] }
 wasm-bindgen-test = "0.3"
 

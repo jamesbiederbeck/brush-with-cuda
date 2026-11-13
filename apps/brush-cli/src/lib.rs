@@ -113,7 +113,11 @@ pub async fn run_cli_ui(
         multi
     };
 
-    log::info!("Compute backend: {:?}", process.device);
+    log::info!(
+        "Compute backend: {} ({:?})",
+        brush_process::RUNTIME_NAME,
+        process.device
+    );
 
     let main_spinner = ProgressBar::new_spinner().with_style(
         ProgressStyle::with_template("{spinner:.blue} {msg}")

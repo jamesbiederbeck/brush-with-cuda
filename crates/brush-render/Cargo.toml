@@ -7,16 +7,16 @@ license.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dependencies]
-brush-cube.path = "../brush-cube"
+brush-cube = { path = "../brush-cube", default-features = false }
 brush-scan.path = "../brush-scan"
 brush-sort.path = "../brush-sort"
 
-# WebGPU everywhere. On macOS you can opt into native MSL with
+# The compute runtime is picked by brush-cube's features: WebGPU by default,
+# CUDA with `brush-cube/cuda`. On macOS you can opt into native MSL with
 # `brush-cube/metal` (see that crate's manifest for why it is not on by
 # default). We still avoid Vulkan on Linux/Windows after the crashes in
 # #423 / #395.
-burn = { workspace = true, features = ["wgpu", "autodiff"] }
-burn-wgpu.workspace = true
+burn = { workspace = true, features = ["autodiff"] }
 burn-cubecl.workspace = true
 burn-fusion.workspace = true
 
@@ -33,6 +33,9 @@ tokio = { workspace = true, features = ["macros", "rt", "sync"] }
 debug-validation = []
 
 [dev-dependencies]
+# Tests and benches need a compute runtime; the default one (wgpu) unless
+# `--features brush-cube/cuda` asks for CUDA.
+brush-cube = { path = "../brush-cube" }
 assert_approx_eq.workspace = true
 wasm-bindgen-test = "0.3"
 

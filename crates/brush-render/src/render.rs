@@ -10,7 +10,7 @@ use crate::{
     sh::sh_degree_from_coeffs,
     shaders,
 };
-use brush_cube::create_tensor;
+use brush_cube::{create_tensor, zeros_tensor};
 use brush_scan::prefix_sum;
 use brush_sort::radix_argsort;
 use burn::backend::TensorMetadata;
@@ -257,10 +257,11 @@ impl SplatOps for CubeBackend {
         let (tile_id_from_isect, compact_gid_from_isect) = tracing::trace_span!("Tile sort")
             .in_scope(|| radix_argsort(tile_id_from_isect, compact_gid_from_isect, bits));
         let cube_dim = CubeDim::new_1d(256);
-        let tile_offsets = Self::int_zeros(
-            [tile_bounds.y as usize, tile_bounds.x as usize, 2].into(),
+        // Packed zeros: tiles nothing lands in keep an empty `[0, 0)` range.
+        let tile_offsets = zeros_tensor(
+            [tile_bounds.y as usize, tile_bounds.x as usize, 2],
             &device,
-            IntDType::U32,
+            DType::U32,
         );
         tracing::trace_span!("GetTileOffsets").in_scope(|| {
             get_tile_offsets::launch(

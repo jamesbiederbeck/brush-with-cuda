@@ -22,7 +22,7 @@ fn main() {}
 const SIZES: [usize; 4] = [1_000_000, 10_000_000, 30_000_000, 70_000_000];
 
 fn device() -> CubeDevice {
-    CubeDevice::Wgpu(block_on(brush_cube::test_helpers::test_device()))
+    block_on(brush_cube::test_helpers::test_cube_device())
 }
 
 fn make_input(size: usize) -> Arc<Vec<u32>> {

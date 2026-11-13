@@ -29,9 +29,12 @@ rayon.workspace = true
 
 tokio = { workspace = true, features = ["io-util", "rt"] }
 burn = { workspace = true, features = ["autodiff"] }
-brush-cube.path = "../brush-cube"
+brush-cube = { path = "../brush-cube", default-features = false }
 
 [dev-dependencies]
+# Tests and benches need a compute runtime; the default one (wgpu) unless
+# `--features brush-cube/cuda` asks for CUDA.
+brush-cube = { path = "../brush-cube" }
 tokio = { workspace = true, features = ["macros", "rt"] }
 wasm-bindgen-test = "0.3"
 

@@ -1,5 +1,5 @@
 use burn::backend::TensorMetadata;
-use burn_wgpu::CubeTensor;
+use burn_cubecl::tensor::CubeTensor;
 use std::collections::HashMap;
 
 #[derive(Clone, Copy)]
